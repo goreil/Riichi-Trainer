@@ -1,0 +1,3 @@
+[submodule "haipai"]
+	path = haipai
+	url = git@github.com:goreil/haipai.git
