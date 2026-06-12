@@ -4,3 +4,7 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8485:80"
+    volumes:
+      # Serve the host-built bundle so changes go live on rebuild
+      # (deploy/watch.sh) without recreating the container.
+      - ./build:/usr/share/nginx/html:ro
