@@ -381,6 +381,7 @@ class UkeireQuiz extends React.Component {
             handUkeire,
             players[0].discards.slice()
         );
+        historyData.remainingCounts = convertRedFives(remainingTiles);
 
         if (shanten <= 0 && handUkeire.value > 0) {
             // If the hand is tenpai, and has winning tiles outside of the hand, training is complete

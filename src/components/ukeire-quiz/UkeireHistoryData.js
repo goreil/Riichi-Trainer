@@ -4,7 +4,7 @@ import { CSS_CLASSES } from "../../Constants";
 
 export default class UkeireHistoryData extends HistoryData {
     /** A history object for the ukeire trainer, which tells the efficiency of a given discard. */
-    constructor(chosenTile = -1, chosenUkeire = -1, bestTile = -1, bestUkeire = undefined, shanten = -1, hand = "", handUkeire = -1, discards = [], drawnTile = -1, message = undefined) {
+    constructor(chosenTile = -1, chosenUkeire = -1, bestTile = -1, bestUkeire = undefined, shanten = -1, hand = "", handUkeire = -1, discards = [], drawnTile = -1, message = undefined, remainingCounts = null) {
         super(message);
         this.chosenTile = chosenTile;
         this.chosenUkeire = chosenUkeire;
@@ -15,6 +15,8 @@ export default class UkeireHistoryData extends HistoryData {
         this.handUkeire = handUkeire;
         this.discards = discards;
         this.drawnTile = drawnTile;
+        /** How many of each tile were left unseen when the discard was made, red fives merged. Used for the ×N badges in the visual history. */
+        this.remainingCounts = remainingCounts;
     }
 
     getMessage(t, concise, verbose, spoilers) {

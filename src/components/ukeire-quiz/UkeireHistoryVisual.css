@@ -1,0 +1,99 @@
+.uhv {
+    width: 100%;
+}
+
+.uhv-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 2px 0;
+}
+
+.uhv-marker {
+    flex: 0 0 auto;
+    min-width: 38px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    color: inherit;
+}
+
+.uhv-marker-best {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.uhv-discard-img {
+    flex: 0 0 auto;
+    width: 27px;
+    aspect-ratio: 192 / 256;
+}
+
+.uhv-count {
+    flex: 0 0 auto;
+    font-weight: bold;
+    color: inherit;
+    white-space: nowrap;
+}
+
+.uhv-gain {
+    flex: 0 0 auto;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 0 5px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #1c7430;
+    white-space: nowrap;
+}
+
+.uhv-chips {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.uhv-chip {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid transparent;
+    border-radius: 3px;
+}
+
+.uhv-chip-unique {
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+.uhv-chip-furiten {
+    border-color: #c82333;
+}
+
+.uhv-chip-img {
+    width: 19px;
+    aspect-ratio: 192 / 256;
+}
+
+.uhv-chip-count {
+    font-size: 0.65rem;
+    line-height: 1;
+    color: inherit;
+}
+
+.uhv-draw-label {
+    font-weight: bold;
+    color: inherit;
+}
+
+.uhv-note {
+    color: inherit;
+}
+
+.uhv-note-row {
+    padding: 2px 0;
+    color: inherit;
+}

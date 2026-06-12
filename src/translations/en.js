@@ -60,6 +60,14 @@ export const en = {
         history: {
             label: "Hand History",
             tenhouLinkText: "[Accepted Tiles]",
+            visual: {
+                you: "You",
+                best: "Best",
+                tileCount: "{{count}} tile",
+                tileCount_plural: "{{count}} tiles",
+                draw: "Draw:",
+                uniqueTooltip: "Tiles this discard accepts that the other doesn't"
+            },
             concise: {
                 discard: "Discard: {{tile}}",
                 acceptance: " ({{count}} tile).",
