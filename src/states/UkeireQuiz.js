@@ -23,6 +23,24 @@ import LocalizedMessage from '../models/LocalizedMessage';
 import UkeireHistoryData from '../components/ukeire-quiz/UkeireHistoryData';
 import HistoryData from '../models/HistoryData';
 
+const SESSIONS_KEY = "statSessions";
+const LEGACY_STATS_KEY = "stats";
+
+/** Creates an empty stat session.
+ * @param {number|null} start Epoch ms the session started, or null for migrated legacy totals.
+ */
+function createSession(start) {
+    return {
+        start: start,
+        discards: 0,
+        tenpai: 0,
+        efficiency: 0,
+        possibleEfficiency: 0,
+        optimalDiscards: 0,
+        shantenIncreases: 0
+    };
+}
+
 class UkeireQuiz extends React.Component {
     constructor(props) {
         super(props);
@@ -42,14 +60,11 @@ class UkeireQuiz extends React.Component {
             optimalCount: 0,
             achievedTotal: 0,
             possibleTotal: 0,
+            shantenCount: 0,
             settings: { /* See ../components/ukeire-quiz/Settings.js */ },
-            stats: {
-                totalDiscards: 0,
-                totalTenpai: 0,
-                totalEfficiency: 0,
-                totalPossibleEfficiency: 0,
-                totalOptimalDiscards: 0
-            },
+            // Each training session (one page load) is tracked separately. The
+            // last entry is the current/active session; earlier entries are history.
+            sessions: [],
             history: [],
             isComplete: false,
             roundWind: 31,
@@ -63,26 +78,38 @@ class UkeireQuiz extends React.Component {
     }
 
     componentDidMount() {
-        try {
-            let savedStats = window.localStorage.getItem("stats");
-            if (savedStats) {
-                savedStats = JSON.parse(savedStats);
+        let sessions = [];
 
-                this.setState({
-                    stats: {
-                        totalDiscards: savedStats.totalDiscards,
-                        totalTenpai: savedStats.totalTenpai,
-                        totalEfficiency: savedStats.totalEfficiency,
-                        totalPossibleEfficiency: savedStats.totalPossibleEfficiency,
-                        totalOptimalDiscards: savedStats.totalOptimalDiscards
-                    }
-                }, () => this.onNewHand());
+        try {
+            let savedSessions = window.localStorage.getItem(SESSIONS_KEY);
+
+            if (savedSessions) {
+                sessions = JSON.parse(savedSessions);
             } else {
-                this.setState({}, () => this.onNewHand());
+                // Migrate the old single cumulative "stats" object into one
+                // "previous totals" history session so existing data isn't lost.
+                let legacy = window.localStorage.getItem(LEGACY_STATS_KEY);
+
+                if (legacy) {
+                    legacy = JSON.parse(legacy);
+                    let migrated = createSession(null);
+                    migrated.discards = legacy.totalDiscards || 0;
+                    migrated.tenpai = legacy.totalTenpai || 0;
+                    migrated.efficiency = legacy.totalEfficiency || 0;
+                    migrated.possibleEfficiency = legacy.totalPossibleEfficiency || 0;
+                    migrated.optimalDiscards = legacy.totalOptimalDiscards || 0;
+                    sessions.push(migrated);
+                }
             }
         } catch {
-            this.setState({}, () => this.onNewHand());
+            sessions = [];
         }
+
+        // Every page load starts a fresh current session (the last entry).
+        sessions.push(createSession(Date.now()));
+        this.persistSessions(sessions);
+
+        this.setState({ sessions: sessions }, () => this.onNewHand());
     }
 
     componentWillUnmount() {
@@ -183,6 +210,7 @@ class UkeireQuiz extends React.Component {
             optimalCount: 0,
             achievedTotal: 0,
             possibleTotal: 0,
+            shantenCount: 0,
             history: history,
             isComplete: false,
             lastDraw: lastDraw || shuffle.pop(),
@@ -367,6 +395,8 @@ class UkeireQuiz extends React.Component {
 
         let achievedTotal = this.state.achievedTotal + chosenUkeire.value;
         let possibleTotal = this.state.possibleTotal + ukeire[bestTile].value;
+        // Same condition that surfaces "(went back in shanten)" in the history.
+        let wentBackInShanten = chosenUkeire.value <= 0 && shanten > 0;
         let tilePool = this.state.tilePool.slice();
         let drawnTile = -1;
 
@@ -448,6 +478,7 @@ class UkeireQuiz extends React.Component {
             players: players,
             discardCount: this.state.discardCount + 1,
             optimalCount: this.state.optimalCount + (chosenUkeire.value === ukeire[bestTile].value ? 1 : 0),
+            shantenCount: this.state.shantenCount + (wentBackInShanten ? 1 : 0),
             hasCopied: false,
             achievedTotal: achievedTotal,
             possibleTotal: possibleTotal,
@@ -472,41 +503,38 @@ class UkeireQuiz extends React.Component {
         }
     }
 
-    /** Save the player's current stats into local storage. */
-    saveStats() {
-        let stats = this.state.stats;
-        stats.totalDiscards += this.state.discardCount;
-        stats.totalTenpai += 1;
-        stats.totalEfficiency += this.state.achievedTotal;
-        stats.totalPossibleEfficiency += this.state.possibleTotal;
-        stats.totalOptimalDiscards += this.state.optimalCount;
-
-        this.setState({
-            stats: stats
-        });
-
+    /** Write the sessions array to local storage. */
+    persistSessions(sessions) {
         try {
-            window.localStorage.setItem("stats", JSON.stringify(stats));
+            window.localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+            // The old single-blob key is superseded by per-session tracking.
+            window.localStorage.removeItem(LEGACY_STATS_KEY);
         } catch { }
     }
 
-    /** Reset the player's stats to nothing. */
+    /** Roll the just-completed hand into the current session and persist. */
+    saveStats() {
+        let sessions = this.state.sessions.slice();
+        let current = { ...sessions[sessions.length - 1] };
+
+        current.discards += this.state.discardCount;
+        current.tenpai += 1;
+        current.efficiency += this.state.achievedTotal;
+        current.possibleEfficiency += this.state.possibleTotal;
+        current.optimalDiscards += this.state.optimalCount;
+        current.shantenIncreases += this.state.shantenCount;
+
+        sessions[sessions.length - 1] = current;
+
+        this.setState({ sessions: sessions });
+        this.persistSessions(sessions);
+    }
+
+    /** Reset all stats: clear history and start a fresh current session. */
     resetStats() {
-        let stats = {
-            totalDiscards: 0,
-            totalTenpai: 0,
-            totalEfficiency: 0,
-            totalPossibleEfficiency: 0,
-            totalOptimalDiscards: 0
-        };
-
-        this.setState({
-            stats: stats
-        });
-
-        try {
-            window.localStorage.setItem("stats", JSON.stringify(stats));
-        } catch { }
+        let sessions = [createSession(Date.now())];
+        this.setState({ sessions: sessions });
+        this.persistSessions(sessions);
     }
 
     /**
@@ -584,7 +612,7 @@ class UkeireQuiz extends React.Component {
         return (
             <Container>
                 <Settings onChange={this.onSettingsChanged} />
-                <StatsDisplay values={this.state.stats} onReset={() => this.resetStats()} />
+                <StatsDisplay sessions={this.state.sessions} onReset={() => this.resetStats()} />
                 <Row>
                     {this.state.disclaimerSeen ? "" : <span>{t("trainer.disclaimer")}</span>}
                 </Row>
