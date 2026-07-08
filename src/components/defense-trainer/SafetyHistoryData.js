@@ -1,9 +1,8 @@
 import { getTileAsText } from '../../scripts/TileConversions';
-import { SAFETY_RATING_EXPLANATIONS } from '../../Constants';
 import HistoryData from '../../models/HistoryData';
 
 export default class SafetyHistoryData extends HistoryData {
-    /** A history object for the defense trainer, which tells the safety of a given discard. */
+    /** A history object for the defense trainer, which tells the deal-in chance of a given discard. */
     constructor(chosenTile = -1, chosenSafety = -1, bestTile = -1, bestSafety = -1, drawnTile = -1, message = undefined) {
         super(message);
         this.chosenTile = chosenTile;
@@ -18,19 +17,17 @@ export default class SafetyHistoryData extends HistoryData {
 
         result += ". ";
 
-        result += t("analyzer.chosenSafety", {
+        result += t("defense.chosenDealIn", {
             tile: getTileAsText(t, this.chosenTile, verbose),
-            rating: Math.floor(this.chosenSafety * 10) / 10,
-            explanation: t(SAFETY_RATING_EXPLANATIONS[Math.floor(this.chosenSafety)])
+            rating: this.chosenSafety.toFixed(2)
         });
 
         if (this.chosenSafety === this.bestSafety) {
             result += t("analyzer.correctSafety");
         } else {
-            result += t("analyzer.bestSafety", {
+            result += t("defense.bestDealIn", {
                 tile: getTileAsText(t, this.bestTile, verbose),
-                rating: Math.floor(this.bestSafety * 10) / 10,
-                explanation: t(SAFETY_RATING_EXPLANATIONS[Math.floor(this.bestSafety)])
+                rating: this.bestSafety.toFixed(2)
             });
         }
 
@@ -48,7 +45,7 @@ export default class SafetyHistoryData extends HistoryData {
         if (this.chosenSafety === this.bestSafety) {
             className = "bg-success text-white";
         }
-        else if (this.chosenSafety >= this.bestSafety - 3) {
+        else if (this.chosenSafety <= this.bestSafety + 2) {
             className = "bg-warning";
         }
         else {

@@ -5,12 +5,13 @@ import DiscardTable from '../components/DiscardTable';
 import Hand from '../components/Hand';
 import History from '../components/History';
 import Player from "../models/Player";
-import { ALL_TILES_REMAINING, PLAYER_NAMES, SAFETY_RATING_EXPLANATIONS } from "../Constants";
+import { ALL_TILES_REMAINING, PLAYER_NAMES } from "../Constants";
 import { generateHand } from "../scripts/GenerateHand";
 import { shuffleArray, randomInt, removeRandomItem, getRandomItem } from "../scripts/Utils";
 import calculateMinimumShanten from "../scripts/ShantenCalculator";
 import { calculateDiscardUkeire } from "../scripts/UkeireCalculator";
-import { evaluateBestDiscard, evaluateDiscardSafety } from "../scripts/Evaluations";
+import { evaluateBestDiscard } from "../scripts/Evaluations";
+import { calculateDealInRates, combineDealInRates, getDoraFromIndicator } from "../scripts/DefenseCalculator";
 import { convertHandToTileIndexArray, convertHandToTenhouString } from "../scripts/HandConversions";
 import SafetyHistoryData from '../components/defense-trainer/SafetyHistoryData';
 import HistoryData from '../models/HistoryData';
@@ -154,7 +155,7 @@ class DefenseState extends React.Component {
                 if (riichiPlayers.some((index => players[index].takesTurnBefore(player)))) {
                     // Someone declared riichi before this player discarded
                     this.drawTilesToFourteen(player, tilePool);
-                    let discard = this.discardSafestTile(player, players, tilePool);
+                    let discard = this.discardSafestTile(player, players, dora);
 
                     for (let j = 0; j < riichiPlayers.length; j++) {
                         if (players[riichiPlayers[j]].takesTurnBefore(player)) {
@@ -180,7 +181,7 @@ class DefenseState extends React.Component {
                 } else {
                     // Fold vs the first (and maybe second) riichi
                     this.drawTilesToFourteen(player, tilePool);
-                    discard = this.discardSafestTile(player, players, tilePool);
+                    discard = this.discardSafestTile(player, players, dora);
                 }
 
                 for (let j = 0; j < riichiPlayers.length; j++) {
@@ -205,7 +206,7 @@ class DefenseState extends React.Component {
                 players[i].discards.push(discard);
             } else {
                 this.drawTilesToFourteen(players[i], tilePool);
-                discard = this.discardSafestTile(players[i], players, tilePool);
+                discard = this.discardSafestTile(players[i], players, dora);
             }
 
             this.tileDiscardedAfterRiichi(discard, players);
@@ -214,9 +215,9 @@ class DefenseState extends React.Component {
         // Remove safe tiles from the player's hand without adding them to the discards
         let tileCount = convertHandToTileIndexArray(players[0].hand).length;
         while (tileCount > this.state.settings.tilesInHand) {
-            let averageSafety = this.getAverageSafety(players[0], players);
-            let bestSafety = Math.max(...averageSafety);
-            let bestChoice = averageSafety.indexOf(bestSafety);
+            let dealInRates = this.getDealInRates(players[0], players, dora);
+            let bestSafety = Math.min(...dealInRates);
+            let bestChoice = dealInRates.indexOf(bestSafety);
             players[0].hand[bestChoice]--;
             tileCount--;
         }
@@ -273,12 +274,13 @@ class DefenseState extends React.Component {
      * Discards the safest tile from the player's hand and returns it.
      * @param {Player} player The player who is discarding.
      * @param {Player[]} players The players in the game.
+     * @param {TileIndex} dora The current dora indicator.
      * @returns {TileIndex} The tile the player discarded.
      */
-    discardSafestTile(player, players) {
-        let averageSafety = this.getAverageSafety(player, players);
-        let bestSafety = Math.max(...averageSafety);
-        let bestChoice = averageSafety.indexOf(bestSafety);
+    discardSafestTile(player, players, dora) {
+        let dealInRates = this.getDealInRates(player, players, dora);
+        let bestSafety = Math.min(...dealInRates);
+        let bestChoice = dealInRates.indexOf(bestSafety);
 
         player.discardTile(bestChoice);
         return bestChoice;
@@ -319,34 +321,26 @@ class DefenseState extends React.Component {
     }
 
     /**
-     * Calculates the average safety for each tile in the given player's hand.
+     * Calculates the combined deal-in percentage for each tile in the given player's hand,
+     * using the KillerDucky wait-enumeration engine (see DefenseCalculator.js) against every
+     * opponent currently in riichi.
      * @param {Player} player The player with the hand to check.
      * @param {Player[]} players The players in the game.
-     * @returns {number[]} The average safety for each tile in the hand.
+     * @param {TileIndex} dora The current dora indicator.
+     * @returns {number[]} The combined deal-in percentage for each tile in the hand; `Infinity` for tiles not in hand.
      */
-    getAverageSafety(player, players) {
-        let totalSafety = Array(38).fill(0);
-        let riichis = 0;
+    getDealInRates(player, players, dora) {
+        let doraTile = getDoraFromIndicator(dora);
+        let hiddenTiles = this.getTilesHiddenFromPlayer(player, players);
+        let rates = [];
 
         for (let i = 0; i < players.length; i++) {
             if (players[i].isInRiichi()) {
-                riichis++;
-
-                let safety = evaluateDiscardSafety(
-                    player.hand,
-                    players[i].discards,
-                    this.getTilesHiddenFromPlayer(player, players),
-                    players[i].discardsAfterRiichi,
-                    players[i].riichiTile
-                );
-
-                for (let j = 0; j < totalSafety.length; j++) {
-                    totalSafety[j] += safety[j];
-                }
+                rates.push(calculateDealInRates(player.hand, hiddenTiles, players[i], doraTile));
             }
         }
 
-        return totalSafety.map((x) => x / riichis);
+        return combineDealInRates(rates);
     }
 
     /**
@@ -424,7 +418,7 @@ class DefenseState extends React.Component {
 
         let chosenTile = parseInt(event.target.name);
         let players = this.state.players.slice();
-        let averageSafety = this.getAverageSafety(players[0], players);
+        let dealInRates = this.getDealInRates(players[0], players, this.state.dora);
         players[0].discardTile(chosenTile);
         this.tileDiscardedAfterRiichi(chosenTile, players);
 
@@ -440,7 +434,7 @@ class DefenseState extends React.Component {
                 players[i].discards.push(discard);
             } else {
                 this.drawTilesToFourteen(players[i], tilePool);
-                discard = this.discardSafestTile(players[i], players, tilePool);
+                discard = this.discardSafestTile(players[i], players, this.state.dora);
             }
 
             this.tileDiscardedAfterRiichi(discard, players);
@@ -479,12 +473,12 @@ class DefenseState extends React.Component {
             }
         }
 
-        let bestSafety = Math.max(...averageSafety);
-        let bestTile = averageSafety.indexOf(bestSafety);
+        let bestSafety = Math.min(...dealInRates);
+        let bestTile = dealInRates.indexOf(bestSafety);
 
         history.unshift(new SafetyHistoryData(
             chosenTile,
-            averageSafety[chosenTile],
+            dealInRates[chosenTile],
             bestTile,
             bestSafety,
             draw
@@ -535,11 +529,6 @@ class DefenseState extends React.Component {
     render() {
         let { t } = this.props;
 
-        let safetyRatings = SAFETY_RATING_EXPLANATIONS.map((explanation, index) => {
-            if (index === 0) return <Row key={index}></Row>;
-            return <Row key={index}>{t("defense.safetyRating", { rating: index, explanation: t(explanation) })}</Row>
-        }).reverse();
-
         return (
             <Container>
                 <DefenseSettings onChange={this.onSettingsChanged} />
@@ -548,7 +537,9 @@ class DefenseState extends React.Component {
                     <Collapse isOpen={!this.state.chartCollapsed}>
                         <Card><CardBody>
                             <Row>{t("defense.averagedSafetyRating")}</Row>
-                            {safetyRatings}
+                            <Row>
+                                <span>{t("defense.dealInAttribution")} <a href="https://github.com/killerducky/killer_mortal_gui" target="_blank" rel="noopener noreferrer">killer_mortal_gui</a> (MIT License).</span>
+                            </Row>
                         </CardBody></Card>
                     </Collapse>
                 </Container>

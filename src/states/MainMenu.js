@@ -29,6 +29,12 @@ class MainMenu extends React.Component {
         }
     }
 
+    componentDidMount() {
+        if (window.location.hash === "#defense") {
+            this.onSetActivePage(STATES.DEFENSE);
+        }
+    }
+
     onSetActivePage(index) {
         this.setState({
             active: index
