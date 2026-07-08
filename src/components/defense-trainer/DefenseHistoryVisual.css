@@ -1,0 +1,98 @@
+.dhv {
+    width: 100%;
+}
+
+.dhv-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 2px 0;
+}
+
+.dhv-marker {
+    flex: 0 0 auto;
+    min-width: 38px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    color: inherit;
+}
+
+.dhv-marker-best {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.dhv-discard-img {
+    flex: 0 0 auto;
+    width: 27px;
+    aspect-ratio: 192 / 256;
+}
+
+.dhv-rate {
+    flex: 0 0 auto;
+    font-weight: bold;
+    color: inherit;
+    white-space: nowrap;
+}
+
+.dhv-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.dhv-plus {
+    flex: 0 0 auto;
+    opacity: 0.7;
+}
+
+.dhv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.dhv-chip-left {
+    font-size: 0.65rem;
+    opacity: 0.75;
+    white-space: nowrap;
+}
+
+.dhv-chip-tiles {
+    display: inline-flex;
+}
+
+.dhv-chip-img {
+    width: 17px;
+    aspect-ratio: 192 / 256;
+}
+
+.dhv-chip-type {
+    font-size: 0.7rem;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.dhv-chip-rate {
+    font-size: 0.75rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.dhv-draw-label {
+    font-weight: bold;
+    color: inherit;
+}
+
+.dhv-note {
+    font-size: 0.8rem;
+    opacity: 0.75;
+}

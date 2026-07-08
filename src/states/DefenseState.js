@@ -11,7 +11,7 @@ import { shuffleArray, randomInt, removeRandomItem, getRandomItem } from "../scr
 import calculateMinimumShanten from "../scripts/ShantenCalculator";
 import { calculateDiscardUkeire } from "../scripts/UkeireCalculator";
 import { evaluateBestDiscard } from "../scripts/Evaluations";
-import { calculateDealInRates, combineDealInRates, getDoraFromIndicator } from "../scripts/DefenseCalculator";
+import { calculateDealInRates, calculateDealInData, combineDealInRates, combineWaitBreakdowns, getDoraFromIndicator } from "../scripts/DefenseCalculator";
 import { convertHandToTileIndexArray, convertHandToTenhouString } from "../scripts/HandConversions";
 import SafetyHistoryData from '../components/defense-trainer/SafetyHistoryData';
 import HistoryData from '../models/HistoryData';
@@ -39,6 +39,7 @@ class DefenseState extends React.Component {
             chartCollapsed: true,
             settings: {
                 verbose: true,
+                extraConcise: false,
                 numberOfRiichis: 1,
                 minimumTurnsBeforeRiichi: 4,
                 tilesInHand: 13,
@@ -344,6 +345,29 @@ class DefenseState extends React.Component {
     }
 
     /**
+     * Builds the per-wait-shape breakdown behind each hand tile's combined deal-in
+     * percentage (see `getDealInRates`), picking whichever riichi opponent is most
+     * dangerous for that tile. Used to show the "why" behind the % in the history.
+     * @param {Player} player The player with the hand to check.
+     * @param {Player[]} players The players in the game.
+     * @param {TileIndex} dora The current dora indicator.
+     * @returns {Array} Length-38 array of wait breakdowns; `null` for tiles not in hand or with no threat.
+     */
+    getDealInBreakdown(player, players, dora) {
+        let doraTile = getDoraFromIndicator(dora);
+        let hiddenTiles = this.getTilesHiddenFromPlayer(player, players);
+        let opponentsData = [];
+
+        for (let i = 0; i < players.length; i++) {
+            if (players[i].isInRiichi()) {
+                opponentsData.push(calculateDealInData(player.hand, hiddenTiles, players[i], doraTile));
+            }
+        }
+
+        return combineWaitBreakdowns(player.hand, opponentsData);
+    }
+
+    /**
      * Brings the player's hand to tenpai after some useless turns.
      * @param {Player} player 
      * @param {TileIndex[]} tilePool 
@@ -419,6 +443,7 @@ class DefenseState extends React.Component {
         let chosenTile = parseInt(event.target.name);
         let players = this.state.players.slice();
         let dealInRates = this.getDealInRates(players[0], players, this.state.dora);
+        let waitBreakdown = this.getDealInBreakdown(players[0], players, this.state.dora);
         players[0].discardTile(chosenTile);
         this.tileDiscardedAfterRiichi(chosenTile, players);
 
@@ -481,7 +506,10 @@ class DefenseState extends React.Component {
             dealInRates[chosenTile],
             bestTile,
             bestSafety,
-            draw
+            draw,
+            undefined,
+            waitBreakdown[chosenTile],
+            waitBreakdown[bestTile]
         ));
 
         this.setState({
@@ -563,7 +591,7 @@ class DefenseState extends React.Component {
                             : ""
                         }
                         <Row className="mt-2 no-gutters">
-                            <History history={this.state.history} concise={true} verbose={this.state.settings.verbose} spoilers={this.state.settings.spoilers} />
+                            <History history={this.state.history} concise={this.state.settings.extraConcise} verbose={this.state.settings.verbose} spoilers={this.state.settings.spoilers} />
                         </Row>
                     </React.Fragment>
                 }

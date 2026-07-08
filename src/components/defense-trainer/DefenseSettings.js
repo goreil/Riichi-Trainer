@@ -12,6 +12,7 @@ class Settings extends React.Component {
             settings: {
                 verbose: true,
                 showIndexes: false,
+                extraConcise: false,
                 numberOfRiichis: 1,
                 minimumTurnsBeforeRiichi: 5,
                 tilesInHand: 13,
@@ -37,6 +38,7 @@ class Settings extends React.Component {
                 let settings = {
                     verbose: savedSettings.verbose,
                     showIndexes: savedSettings.showIndexes || false,
+                    extraConcise: savedSettings.extraConcise || false,
                     numberOfRiichis: savedSettings.numberOfRiichis || 1,
                     minimumTurnsBeforeRiichi: savedSettings.minimumTurnsBeforeRiichi || 4,
                     tilesInHand: savedSettings.tilesInHand || 13,
@@ -100,6 +102,13 @@ class Settings extends React.Component {
                                 <Input className="form-check-input" type="checkbox" id="showIndexes"
                                     checked={this.state.settings.showIndexes} onChange={this.onSettingChanged} />
                                 <Label className="form-check-label" for="showIndexes">{t("settings.showIndexes")}</Label>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col className="form-check form-check-inline">
+                                <Input className="form-check-input" type="checkbox" id="extraConcise"
+                                    checked={this.state.settings.extraConcise} onChange={this.onSettingChanged} />
+                                <Label className="form-check-label" for="extraConcise">{t("settings.concise")}</Label>
                             </Col>
                         </Row>
                         <Row>

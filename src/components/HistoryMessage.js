@@ -3,6 +3,8 @@ import { ListGroupItem, Collapse, Row } from 'reactstrap';
 import { withTranslation } from 'react-i18next';
 import UkeireHistoryData from './ukeire-quiz/UkeireHistoryData';
 import UkeireHistoryVisual from './ukeire-quiz/UkeireHistoryVisual';
+import SafetyHistoryData from './defense-trainer/SafetyHistoryData';
+import DefenseHistoryVisual from './defense-trainer/DefenseHistoryVisual';
 
 class HistoryMessage extends React.Component {
     /* PROPS
@@ -32,6 +34,10 @@ class HistoryMessage extends React.Component {
             // The concise setting keeps the old compact text; otherwise ukeire
             // entries get the visual discard comparison.
             content = <UkeireHistoryVisual data={this.props.data} spoilers={this.props.spoilers} verbose={this.props.verbose} />;
+        } else if (!this.props.concise && this.props.data instanceof SafetyHistoryData) {
+            // Same treatment for the defense trainer: the wait-shape breakdown
+            // behind each deal-in % shown as tile chips instead of plain text.
+            content = <DefenseHistoryVisual data={this.props.data} spoilers={this.props.spoilers} verbose={this.props.verbose} />;
         } else {
             let message = this.props.data.getMessage(t, this.props.concise, this.props.verbose, this.props.spoilers);
             content = message.split("<br/>").map((message, index) => <Row key={index}>{message}</Row>);

@@ -311,11 +311,20 @@ export const en = {
             safetyRatings: "About the Deal-in %",
             averagedSafetyRating: "The deal-in % is the estimated chance of dealing into at least one riichi with that tile, combined across every riichi opponent.",
             dealInAttribution: "Deal-in probabilities are calculated using the wait-enumeration algorithm from",
-            chosenDealIn: "The {{tile}}'s estimated deal-in chance is {{rating}}%. ",
-            bestDealIn: "Safest tile: {{tile}}, with an estimated deal-in chance of {{rating}}%.",
+            chosenDealIn: "The {{tile}}'s estimated deal-in chance is {{rating}}% ({{breakdown}}). ",
+            bestDealIn: "Safest tile: {{tile}}, with an estimated deal-in chance of {{rating}}% ({{breakdown}}).",
             riichiCount: "Number of riichis: ",
             minTurns: "Minimum turns before a riichi is declared: ",
-            tilesInHand: "Number of tiles in hand: "
+            tilesInHand: "Number of tiles in hand: ",
+            waitBreakdown: {
+                none: "no live waits",
+                entry: "{{tiles}} {{type}} {{rate}}%",
+                ryanmen: "ryanmen",
+                kanchan: "kanchan",
+                penchan: "penchan",
+                tanki: "tanki",
+                shanpon: "shanpon"
+            }
         },
         shanten: {
             instructions: "Looking to improve your speed at calculating shanten? This tool will help you practice.",
