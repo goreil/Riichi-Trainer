@@ -566,7 +566,7 @@ class DefenseState extends React.Component {
                         <Card><CardBody>
                             <Row>{t("defense.averagedSafetyRating")}</Row>
                             <Row>
-                                <span>{t("defense.dealInAttribution")} <a href="https://github.com/killerducky/killer_mortal_gui" target="_blank" rel="noopener noreferrer">killer_mortal_gui</a> (MIT License).</span>
+                                <span style={{ color: "black" }}>{t("defense.dealInAttribution")} <a href="https://github.com/killerducky/killer_mortal_gui" target="_blank" rel="noopener noreferrer">killer_mortal_gui</a> (MIT License).</span>
                             </Row>
                         </CardBody></Card>
                     </Collapse>
